@@ -1,37 +1,22 @@
-const router = require("express").Router();
-const multer = require("multer");
-const { storage } = require("../api/image")
-const upload = multer({ storage: storage });
-const User = require("../models/user")
-const Image = require("../models/image")
-const passport = require("passport");
-
-router.post("/post-image", upload.array("image"), async (req, res) => {
-    const user = req.session?.passport?.user;
-    console.log("New", user);
-    const curr_user = await User.findOne({ username: user }).exec();
-    for (const img of req.files) {
-        const imgi = await Image.create({
-            ImageUrl: img.path,
-            Filename: img.filename,
-        });
-        curr_user.images.push(imgi._id);
-    }
-    await curr_user.save();
-    res.redirect("/images/getimage");
-});
+const cloudinary = require("cloudinary").v2
+const {CloudinaryStorage} = require("multer-storage-cloudinary");
 
 
-router.get("/getimage", async (req, res) => {
-    const user = req.session?.passport?.user;
-    console.log("New", user);
-    const curr_user = await User.findOne({ username: user }).exec();
-    const populatedUser = await User.populate(curr_user, { path: "images" }); // Populate the images field
-    const populatedImageUrlArray = populatedUser.images.map(image => image.ImageUrl); // Extract ImageUrl values
-    res.render("image.ejs", { url: populatedImageUrlArray });
-
+cloudinary.config({
+  cloud_name: "dh04ahb5s",
+  api_key: "161722351559698",
+  api_secret: "EIt-GZYruU-gdtXzIc6fIOrRDYE"
 })
 
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params : {
+        folder : "Pratham",
+        allowedFormats : ['jpeg' , 'png' , 'jpg']
+    }
+})
 
-
-module.exports = router;
+module.exports = {
+    cloudinary,
+    storage
+}
